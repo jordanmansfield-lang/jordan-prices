@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Site editor · Jordan Mansfield</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Quicksand:wght@400;500;600&display=swap">
+<style>
+:root{--paper:#f6f6f3;--panel:#fff;--ink:#1c1c1a;--muted:#6b6a65;--line:#e3e2dd;--sage:#56664c;--sage-soft:#eef1ea;--warn:#a5521b;--bad:#b3261e;
+  --display:"Marcellus",Georgia,serif;--body:"Quicksand","Avenir Next","Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font:500 15px/1.5 var(--body)}
+button,input,textarea,select{font:inherit;color:inherit}
+a{color:inherit}
+.top{position:sticky;top:0;z-index:10;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:12px 20px;flex-wrap:wrap}
+.top .brand{font-size:.78rem;letter-spacing:.34em;text-transform:uppercase;margin-right:auto}
+.top .brand small{display:block;letter-spacing:.1em;text-transform:none;color:var(--muted);font-size:.78rem;margin-top:2px}
+.state{font-size:.82rem;color:var(--muted)}
+.state.dirty{color:var(--warn)}
+.state.ok{color:var(--sage)}
+.btn{border:1px solid var(--ink);background:var(--ink);color:#fff;padding:9px 16px;cursor:pointer;font-size:.74rem;letter-spacing:.18em;text-transform:uppercase;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:#000}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:#fff}
+.btn.small{padding:6px 10px;font-size:.66rem}
+.btn.danger{border-color:var(--bad);color:var(--bad);background:transparent}
+.btn.danger:hover{background:var(--bad);color:#fff}
+.btn[disabled]{opacity:.45;cursor:default}
+.layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:0;min-height:calc(100vh - 62px)}
+.side{border-right:1px solid var(--line);background:var(--panel);padding:16px 0;position:sticky;top:62px;align-self:start;max-height:calc(100vh - 62px);overflow:auto}
+.side h4{margin:14px 20px 6px;font-size:.66rem;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.side button{display:block;width:100%;text-align:left;border:0;background:none;padding:8px 20px;cursor:pointer;font-size:.92rem;border-left:3px solid transparent}
+.side button:hover{background:var(--paper)}
+.side button[aria-current="true"]{border-left-color:var(--sage);background:var(--sage-soft);font-weight:600}
+main{padding:28px clamp(16px,4vw,48px) 80px;max-width:980px}
+h1{font-family:var(--display);font-weight:400;letter-spacing:.14em;text-transform:uppercase;font-size:1.6rem;margin:0 0 4px}
+.lead{color:var(--muted);margin:0 0 24px;max-width:64ch}
+.field{display:grid;gap:6px;margin-bottom:16px}
+.field>label,.lbl{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.hint{font-size:.8rem;color:var(--muted);font-weight:400;letter-spacing:0;text-transform:none}
+input[type=text],input[type=url],input[type=number],input[type=email],textarea,select{width:100%;border:1px solid var(--line);background:var(--panel);padding:9px 11px;border-radius:2px}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--sage);outline-offset:-1px;border-color:var(--sage)}
+textarea{min-height:84px;resize:vertical;line-height:1.55}
+.money{display:flex;align-items:center;border:1px solid var(--line);background:var(--panel);max-width:180px}
+.money span{padding:0 4px 0 10px;color:var(--muted)}
+.money input{border:0;padding-left:2px}
+.check{display:flex;gap:10px;align-items:center;font-size:.92rem;cursor:pointer;margin-bottom:12px}
+.check input{width:18px;height:18px;accent-color:var(--sage)}
+.card{background:var(--panel);border:1px solid var(--line);margin-bottom:14px}
+.card>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:12px 14px}
+.card>summary::-webkit-details-marker{display:none}
+.card>summary::before{content:"▸";color:var(--muted);transition:transform .15s}
+.card[open]>summary::before{transform:rotate(90deg)}
+.card>summary .t{font-weight:600;margin-right:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card>summary img{width:48px;height:36px;object-fit:cover;background:var(--line)}
+.card .body{padding:4px 16px 8px;border-top:1px solid var(--line)}
+.tools{display:flex;gap:4px;flex-shrink:0}
+.icon{border:1px solid var(--line);background:var(--panel);width:30px;height:30px;cursor:pointer;display:grid;place-items:center;font-size:.85rem}
+.icon:hover{border-color:var(--ink)}
+.icon.del:hover{border-color:var(--bad);color:var(--bad)}
+.list{display:grid;gap:8px;margin-bottom:8px}
+.li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}
+.group{border-left:2px solid var(--line);padding-left:16px;margin:8px 0 22px}
+.group>.lbl{display:block;margin-bottom:10px}
+.pick{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.pick img{width:140px;height:94px;object-fit:cover;background:var(--line);border:1px solid var(--line)}
+.pick .none{width:140px;height:94px;display:grid;place-items:center;background:var(--line);color:var(--muted);font-size:.8rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+.ph{background:var(--panel);border:1px solid var(--line);display:grid}
+.ph img{width:100%;aspect-ratio:3/2;object-fit:cover;background:var(--line)}
+.ph .meta{padding:8px 10px;display:grid;gap:4px;font-size:.8rem}
+.ph .id{font-weight:600;word-break:break-all}
+.ph .used{color:var(--muted)}
+.ph .acts{display:flex;gap:6px;flex-wrap:wrap;padding:0 10px 10px}
+.badge{display:inline-block;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;padding:2px 6px;border:1px solid var(--line);color:var(--muted);margin-right:4px}
+.badge.up{border-color:var(--sage);color:var(--sage)}
+.drop{border:2px dashed var(--line);background:var(--panel);padding:26px;text-align:center;margin-bottom:22px;cursor:pointer}
+.drop.over{border-color:var(--sage);background:var(--sage-soft)}
+.progress{font-size:.85rem;color:var(--sage);min-height:1.3em;margin:-10px 0 16px}
+.modal{position:fixed;inset:0;background:rgba(20,20,18,.55);z-index:30;display:grid;place-items:center;padding:20px}
+.modal .inner{background:var(--paper);width:min(980px,100%);max-height:88vh;overflow:auto;padding:22px}
+.modal .head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.modal .head h2{margin:0 auto 0 0;font-family:var(--display);font-weight:400;letter-spacing:.12em;text-transform:uppercase;font-size:1.2rem}
+.modal .grid button{border:2px solid transparent;padding:0;background:none;cursor:pointer;text-align:left}
+.modal .grid button:hover,.modal .grid button[aria-pressed="true"]{border-color:var(--sage)}
+.modal .grid button span{display:block;font-size:.78rem;padding:4px 2px;word-break:break-all}
+table{width:100%;border-collapse:collapse;background:var(--panel);font-size:.88rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.ok{color:var(--sage)} .bad{color:var(--bad)}
+.tablewrap{overflow-x:auto}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;font-size:.88rem;z-index:40}
+@media (max-width:760px){.layout{grid-template-columns:1fr}.side{position:static;max-height:none;display:flex;overflow-x:auto;padding:6px}.side h4{display:none}.side button{white-space:nowrap;width:auto;border-left:0;border-bottom:3px solid transparent;padding:8px 12px}.side button[aria-current="true"]{border-bottom-color:var(--sage)}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">Jordan Mansfield<small>Site editor</small></div>
+  <span class="state" id="state">Loading…</span>
+  <a class="btn ghost" href="/" target="_blank" rel="noopener">View site ↗</a>
+  <button class="btn" id="save" disabled>Save changes</button>
+</header>
+<div class="layout">
+  <nav class="side" id="side" aria-label="Sections"></nav>
+  <main id="main"><p class="lead">Loading your content…</p></main>
+</div>
+
+<div class="modal" id="picker" hidden role="dialog" aria-modal="true" aria-label="Choose a photo">
+  <div class="inner">
+    <div class="head"><h2>Choose a photo</h2><label class="btn ghost small">Upload new<input type="file" id="pickUpload" accept="image/*" hidden></label><button class="btn small" id="pickClose">Close</button></div>
+    <div class="grid" id="pickGrid"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const SECTIONS = [
+  { id: "hero", title: "Top of page", lead: "The big opening photo and your name." },
+  { id: "about", title: "About me", lead: "Your story, photo and caption." },
+  { id: "facts", title: "At a glance", lead: "The row of four short facts under About me." },
+  { id: "style", title: "My style", lead: "The quote and the paragraphs about how you work." },
+  { id: "packages", title: "Packages & prices", lead: "Each package’s photo, wording and price. Prices here also drive the quote builder and the enquiry emails." },
+  { id: "extras", title: "Extras", lead: "Film extras, add-ons like a second photographer, and the drone section." },
+  { id: "builder", title: "Build your day", lead: "Headings and messages in the quote builder." },
+  { id: "films", title: "Films", lead: "The film tiles. Each one links out to where the film is hosted." },
+  { id: "gallery", title: "Gallery", lead: "The photo grid. Drag order with the arrows." },
+  { id: "testimonials", title: "Kind words", lead: "Testimonials from your couples." },
+  { id: "contact", title: "Contact", lead: "The closing section with your email and links." },
+  { id: "emails", title: "Enquiry emails", lead: "What the automatic emails say." },
+  { id: "site", title: "Page details", lead: "The browser tab title, search description and footer." }
+];
+const LABELS = {
+  title:"Title", subtitle:"Subtitle", year:"Year line", image:"Photo", alt:"Photo description (for screen readers & Google)",
+  eyebrow:"Small heading above", heading:"Heading", paragraphs:"Paragraphs", caption:"Caption under photo",
+  big:"Big text", small:"Small text", quote:"Quote", quoteNote:"Line under the quote",
+  chapterTitle:"Section heading above this package", chapterPrice:"Price under that heading",
+  name:"Name", lede:"Short intro line", items:"What’s included", price:"Price", priceIsFrom:"Show as “from” price",
+  includesFilm:"Includes film (allows film extras)", builderNote:"Short description in the quote builder",
+  panelPosition:"Where the white panel sits on the photo", linkText:"Link text", linkUrl:"Link address",
+  filmHeading:"Film extras heading", filmNote:"Note under film extras", filmExtras:"Film extras", addOns:"Add-ons",
+  drone:"Drone section", builderLine:"Line in the quote summary", text:"Text",
+  intro:"Intro text", fromNote:"Note when a “from” price is chosen", thanksHeading:"Thank-you heading (after sending)", thanksText:"Thank-you message",
+  items_films:"Film tiles", note:"Second line", url:"Link address", photos:"Photos", names:"Couple’s names",
+  email:"Email address", instagram:"Instagram link", website:"Website link",
+  coupleSubject:"Subject of the email to the couple", coupleIntro:"Opening message to the couple", coupleSignoff:"Sign-off",
+  jordanSubject:"Subject of the email to you",
+  pageTitle:"Browser tab title", metaDescription:"Description shown in Google", footerLeft:"Footer (left)", footerRight:"Footer (right)"
+};
+const LONG = new Set(["text","intro","lede","quote","coupleIntro","coupleSignoff","fromNote","thanksText","metaDescription","caption"]);
+const ITEM_TEMPLATES = {
+  facts: { big: "", small: "" },
+  packages: { chapterTitle: "", chapterPrice: "", name: "New package", lede: "", items: ["10 hours coverage"], price: 0, priceIsFrom: false, includesFilm: false, builderNote: "", image: "", alt: "", panelPosition: "top left", linkText: "", linkUrl: "" },
+  filmExtras: { name: "New film extra", price: 0 },
+  addOns: { heading: "New extra", name: "New extra", price: 0, priceIsFrom: true, text: "" },
+  "films.items": { title: "New film", note: "Watch the film", url: "https://", image: "" },
+  "gallery.photos": { image: "", alt: "" },
+  "testimonials.items": { names: "", paragraphs: [""] }
+};
+
+let content = null, photos = [], version = 1, current = "hero", dirty = false;
+const $ = (s, el = document) => el.querySelector(s);
+const h = (tag, attrs = {}, ...kids) => {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") el.className = v; else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (v === true) el.setAttribute(k, ""); else if (v !== false && v != null) el.setAttribute(k, v);
+  }
+  kids.flat().forEach((k) => k != null && el.append(k.nodeType ? k : document.createTextNode(k)));
+  return el;
+};
+const thumb = (id) => `/img/v${version}/${id}-s.jpg`;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 3200); }
+function setDirty(d) {
+  dirty = d; const s = $("#state");
+  s.textContent = d ? "Unsaved changes" : "All changes saved"; s.className = "state " + (d ? "dirty" : "ok");
+  $("#save").disabled = !d;
+}
+window.addEventListener("beforeunload", (e) => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, { credentials: "same-origin", ...opts });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || `Something went wrong (${r.status}).`);
+  return j;
+}
+
+/* ---------- navigation ---------- */
+function renderSide() {
+  const side = $("#side"); side.innerHTML = "";
+  side.append(h("h4", {}, "Wording & prices"));
+  SECTIONS.forEach((s) => side.append(h("button", { "aria-current": String(current === s.id), onclick: () => go(s.id) }, s.title)));
+  side.append(h("h4", {}, "More"));
+  [["photos", "Photo library"], ["enquiries", "Enquiries"]].forEach(([id, t]) => side.append(h("button", { "aria-current": String(current === id), onclick: () => go(id) }, t)));
+}
+function go(id) { current = id; renderSide(); render(); window.scrollTo(0, 0); }
+
+/* ---------- generic editor ---------- */
+function label(key, path) { if (path === "testimonials.items") return "Testimonials"; return LABELS[path === "films.items" ? "items_films" : key] || key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase()); }
+
+function fieldFor(obj, key, path) {
+  const val = obj[key], id = "f-" + path.replace(/[^a-z0-9]/gi, "-");
+  const set = (v) => { obj[key] = v; setDirty(true); };
+  if (key === "image") return imageField(obj, key, id);
+  if (key === "panelPosition") {
+    const sel = h("select", { id, onchange: (e) => set(e.target.value) }, ["top left", "top right", "bottom left", "bottom right"].map((o) => h("option", { value: o, selected: o === val }, o.replace(/^./, (c) => c.toUpperCase()))));
+    return h("div", { class: "field" }, h("label", { for: id }, label(key)), sel);
+  }
+  if (typeof val === "boolean") return h("label", { class: "check" }, h("input", { type: "checkbox", id, checked: val, onchange: (e) => set(e.target.checked) }), label(key));
+  if (typeof val === "number" || key === "price") {
+    return h("div", { class: "field" }, h("label", { for: id }, label(key)),
+      h("div", { class: "money" }, h("span", {}, "£"), h("input", { type: "number", id, min: "0", step: "1", value: val ?? 0, oninput: (e) => set(Number(e.target.value) || 0) })));
+  }
+  if (Array.isArray(val)) return arrayField(obj, key, path);
+  if (val && typeof val === "object") {
+    return h("div", { class: "group" }, h("span", { class: "lbl" }, label(key)), ...Object.keys(val).map((k) => fieldFor(val, k, path + "." + k)));
+  }
+  const long = LONG.has(key) || String(val || "").length > 90;
+  const input = long
+    ? h("textarea", { id, oninput: (e) => set(e.target.value) }, val ?? "")
+    : h("input", { type: /url|instagram|website/i.test(key) ? "url" : "text", id, value: val ?? "", oninput: (e) => set(e.target.value) });
+  return h("div", { class: "field" }, h("label", { for: id }, label(key)), input);
+}
+
+function moveBtns(arr, i, rerender) {
+  return h("span", { class: "tools" },
+    h("button", { class: "icon", type: "button", title: "Move up", disabled: i === 0, onclick: (e) => { e.preventDefault(); [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]]; setDirty(true); rerender(); } }, "↑"),
+    h("button", { class: "icon", type: "button", title: "Move down", disabled: i === arr.length - 1, onclick: (e) => { e.preventDefault(); [arr[i + 1], arr[i]] = [arr[i], arr[i + 1]]; setDirty(true); rerender(); } }, "↓"),
+    h("button", { class: "icon del", type: "button", title: "Remove", onclick: (e) => { e.preventDefault(); if (!confirm("Remove this?")) return; arr.splice(i, 1); setDirty(true); rerender(); } }, "✕"));
+}
+
+function arrayField(obj, key, path) {
+  const arr = obj[key];
+  const wrap = h("div", { class: "field" });
+  const rerender = () => wrap.replaceWith(arrayField(obj, key, path));
+  const tplKey = ITEM_TEMPLATES[path] ? path : key;
+  const isObjects = arr.length ? typeof arr[0] === "object" : !!ITEM_TEMPLATES[tplKey];
+  wrap.append(h("span", { class: "lbl" }, label(key, path)));
+  if (!isObjects) {
+    const list = h("div", { class: "list" });
+    arr.forEach((v, i) => {
+      const long = key === "paragraphs";
+      const input = long ? h("textarea", { oninput: (e) => { arr[i] = e.target.value; setDirty(true); } }, v)
+                         : h("input", { type: "text", value: v, oninput: (e) => { arr[i] = e.target.value; setDirty(true); } });
+      list.append(h("div", { class: "li" }, input, moveBtns(arr, i, rerender)));
+    });
+    wrap.append(list, h("div", {}, h("button", { class: "btn ghost small", type: "button", onclick: () => { arr.push(""); setDirty(true); rerender(); } }, key === "paragraphs" ? "+ Add paragraph" : "+ Add line")));
+    return wrap;
+  }
+  arr.forEach((item, i) => {
+    const t = item.name || item.names || item.title || item.heading || item.big || item.alt || item.image || `Item ${i + 1}`;
+    const sum = h("summary", {}, item.image ? h("img", { src: thumb(item.image), alt: "" }) : null, h("span", { class: "t" }, t), moveBtns(arr, i, rerender));
+    const body = h("div", { class: "body" }, ...Object.keys(item).map((k) => fieldFor(item, k, `${path}.${i}.${k}`)));
+    wrap.append(h("details", { class: "card", open: arr.length <= 4 && !["photos"].includes(key) }, sum, body));
+  });
+  const tpl = ITEM_TEMPLATES[tplKey];
+  wrap.append(h("div", {}, h("button", { class: "btn ghost small", type: "button", onclick: () => {
+    arr.push(structuredClone(tpl || Object.fromEntries(Object.entries(arr[0] || {}).map(([k, v]) => [k, typeof v === "number" ? 0 : typeof v === "boolean" ? false : Array.isArray(v) ? [] : ""]))));
+    setDirty(true); rerender();
+  } }, "+ Add another")));
+  return wrap;
+}
+
+function imageField(obj, key, id) {
+  const box = h("div", { class: "field" });
+  const draw = () => {
+    box.innerHTML = "";
+    box.append(h("span", { class: "lbl" }, "Photo"),
+      h("div", { class: "pick" },
+        obj[key] ? h("img", { src: thumb(obj[key]), alt: "" }) : h("div", { class: "none" }, "No photo"),
+        h("div", {}, h("div", { class: "hint" }, obj[key] || ""),
+          h("button", { class: "btn ghost small", type: "button", onclick: () => openPicker(obj[key], (pid) => { obj[key] = pid; setDirty(true); draw(); }) }, obj[key] ? "Change photo" : "Choose photo"))));
+  };
+  draw();
+  return box;
+}
+
+/* ---------- sections ---------- */
+function render() {
+  const main = $("#main"); main.innerHTML = "";
+  if (current === "photos") return renderPhotos(main);
+  if (current === "enquiries") return renderEnquiries(main);
+  const s = SECTIONS.find((x) => x.id === current);
+  main.append(h("h1", {}, s.title), h("p", { class: "lead" }, s.lead));
+  if (s.id === "packages") {
+    main.append(fieldFor(content.packagesIntro, "eyebrow", "packagesIntro.eyebrow"));
+    main.append(arrayField(content, "packages", "packages"));
+  } else if (s.id === "facts") {
+    main.append(arrayField(content, "facts", "facts"));
+  } else {
+    const obj = content[s.id];
+    Object.keys(obj).forEach((k) => main.append(fieldFor(obj, k, `${s.id}.${k}`)));
+  }
+  if (s.id === "site") {
+    main.append(h("div", { class: "group", style: "margin-top:40px" }, h("span", { class: "lbl" }, "Start again"),
+      h("p", { class: "hint" }, "Puts all wording and prices back to how they were when the site was first built. Your photo library isn’t touched."),
+      h("button", { class: "btn danger small", type: "button", onclick: resetAll }, "Restore original wording")));
+  }
+}
+
+async function resetAll() {
+  if (!confirm("Restore all original wording and prices? Any edits you’ve saved will be lost.")) return;
+  await api("/api/admin/content/reset", { method: "POST" });
+  await load(); toast("Original wording restored");
+}
+
+/* ---------- photo library ---------- */
+function usage() {
+  const map = {};
+  const walk = (o, where) => {
+    if (Array.isArray(o)) o.forEach((x) => walk(x, where));
+    else if (o && typeof o === "object") for (const [k, v] of Object.entries(o)) { if (k === "image" && v) (map[v] ||= new Set()).add(where); else walk(v, where); }
+  };
+  SECTIONS.forEach((s) => walk(s.id === "packages" ? content.packages : content[s.id], s.title));
+  return map;
+}
+
+function renderPhotos(main) {
+  const used = usage();
+  main.append(h("h1", {}, "Photo library"),
+    h("p", { class: "lead" }, "Upload new photos here, then choose where they appear in each section. Large files are resized automatically before uploading, so you can drop in full-size JPEGs."));
+  const input = h("input", { type: "file", accept: "image/*", multiple: true, hidden: true, onchange: (e) => uploadMany([...e.target.files]) });
+  const drop = h("div", { class: "drop", onclick: () => input.click() }, h("strong", {}, "Drop photos here"), h("div", { class: "hint" }, "or click to choose · JPEG or PNG"), input);
+  ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", (e) => uploadMany([...e.dataTransfer.files].filter((f) => f.type.startsWith("image/"))));
+  main.append(drop, h("div", { class: "progress", id: "progress" }));
+  const grid = h("div", { class: "grid" });
+  photos.forEach((p) => {
+    const where = used[p.id] ? [...used[p.id]].join(", ") : "Not used yet";
+    const rep = h("input", { type: "file", accept: "image/*", hidden: true, onchange: async (e) => { if (e.target.files[0]) { await uploadOne(e.target.files[0], p.id); await refreshPhotos(); render(); toast("Photo replaced"); } } });
+    grid.append(h("div", { class: "ph" },
+      h("img", { src: thumb(p.id), alt: "" }),
+      h("div", { class: "meta" }, h("span", { class: "id" }, p.id),
+        h("span", {}, p.starter ? h("span", { class: "badge" }, "Starter") : null, p.uploaded ? h("span", { class: "badge up" }, p.starter ? "Replaced" : "Uploaded") : null),
+        h("span", { class: "used" }, where)),
+      h("div", { class: "acts" },
+        h("label", { class: "btn ghost small" }, "Replace", rep),
+        p.uploaded ? h("button", { class: "btn danger small", type: "button", onclick: () => removePhoto(p, !!used[p.id]) }, p.starter ? "Undo replace" : "Delete") : null)));
+  });
+  main.append(grid);
+}
+
+async function removePhoto(p, inUse) {
+  const msg = p.starter ? `Go back to the original "${p.id}" photo?` : inUse ? `"${p.id}" is still used on the page. Delete it anyway? Those spots will show a blank until you choose another photo.` : `Delete "${p.id}"?`;
+  if (!confirm(msg)) return;
+  const j = await api(`/api/admin/photos/${p.id}`, { method: "DELETE" });
+  version = j.version || version + 1; await refreshPhotos(); render(); toast("Done");
+}
+
+const slug = (name) => name.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "photo";
+function uniqueId(base) { let id = base, n = 2; const ids = new Set(photos.map((p) => p.id)); while (ids.has(id)) id = `${base}-${n++}`; return id; }
+
+async function resize(file, max, quality) {
+  let bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation: "from-image" }); }
+  catch { throw new Error(`${file.name}: this browser can’t read that file type. Please export it as a JPEG first.`); }
+  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas"); c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+  const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(bmp, 0, 0, c.width, c.height);
+  return await new Promise((res) => c.toBlob(res, "image/jpeg", quality));
+}
+
+async function uploadOne(file, id) {
+  const small = await resize(file, 900, 0.78);
+  const large = await resize(file, 2000, 0.82);
+  await api(`/api/admin/photos/${id}/s`, { method: "PUT", headers: { "content-type": "image/jpeg" }, body: small });
+  const j = await api(`/api/admin/photos/${id}/l`, { method: "PUT", headers: { "content-type": "image/jpeg" }, body: large });
+  if (j.version) version = j.version;
+  return id;
+}
+
+async function uploadMany(files) {
+  const prog = $("#progress"); let done = 0, last = null;
+  for (const f of files) {
+    if (prog) prog.textContent = `Uploading ${done + 1} of ${files.length}: ${f.name}…`;
+    try { last = await uploadOne(f, uniqueId(slug(f.name))); photos.push({ id: last, uploaded: true }); done++; }
+    catch (e) { alert(e.message); }
+  }
+  await refreshPhotos(); render();
+  toast(`${done} photo${done === 1 ? "" : "s"} uploaded`);
+  return last;
+}
+
+async function refreshPhotos() { const j = await api("/api/admin/photos"); photos = j.photos; version = j.version; }
+
+/* ---------- picker ---------- */
+let pickCb = null;
+function openPicker(currentId, cb) {
+  pickCb = cb; const grid = $("#pickGrid"); grid.innerHTML = "";
+  photos.forEach((p) => grid.append(h("button", { type: "button", "aria-pressed": String(p.id === currentId), onclick: () => { closePicker(); cb(p.id); } }, h("img", { src: thumb(p.id), alt: "", loading: "lazy", style: "width:100%;aspect-ratio:3/2;object-fit:cover" }), h("span", {}, p.id))));
+  $("#picker").hidden = false;
+}
+function closePicker() { $("#picker").hidden = true; }
+$("#pickClose").onclick = closePicker;
+$("#picker").addEventListener("click", (e) => { if (e.target.id === "picker") closePicker(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#picker").hidden) closePicker(); });
+$("#pickUpload").onchange = async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  const cb = pickCb; closePicker(); toast("Uploading…");
+  const id = await uploadOne(f, uniqueId(slug(f.name))); await refreshPhotos(); cb(id); toast("Photo uploaded");
+  e.target.value = "";
+};
+
+/* ---------- enquiries ---------- */
+async function renderEnquiries(main) {
+  main.append(h("h1", {}, "Enquiries"), h("p", { class: "lead" }, "Every enquiry sent from the page is kept here too, in case an email ever goes astray. Newest first."));
+  const holder = h("div", { class: "tablewrap" }, h("p", { class: "hint" }, "Loading…")); main.append(holder);
+  try {
+    const { items } = await api("/api/admin/enquiries");
+    if (!items.length) { holder.innerHTML = ""; holder.append(h("p", { class: "hint" }, "No enquiries yet. They’ll appear here as soon as a couple sends one.")); return; }
+    const fmt = (iso) => new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    const t = h("table", {}, h("thead", {}, h("tr", {}, ["Received", "Couple", "Wedding", "Selection", "Emails"].map((x) => h("th", {}, x)))),
+      h("tbody", {}, items.map((e) => h("tr", {},
+        h("td", {}, fmt(e.at)),
+        h("td", {}, h("strong", {}, e.names), h("br"), h("a", { href: `mailto:${e.email}` }, e.email), e.phone ? [h("br"), e.phone] : null),
+        h("td", {}, e.date || "–", e.venue ? [h("br"), e.venue] : null),
+        h("td", {}, (e.lines || []).map((l) => [l.name, h("br")]), h("strong", {}, e.totalText), e.message ? [h("br"), h("span", { class: "hint" }, e.message)] : null),
+        h("td", {}, h("span", { class: e.sentToJordan ? "ok" : "bad" }, e.sentToJordan ? "✓ to you" : "✕ to you"), h("br"), h("span", { class: e.sentToCouple ? "ok" : "bad" }, e.sentToCouple ? "✓ to couple" : "✕ to couple"))))));
+    holder.innerHTML = ""; holder.append(t);
+  } catch (err) { holder.innerHTML = ""; holder.append(h("p", { class: "bad" }, err.message)); }
+}
+
+/* ---------- save / load ---------- */
+$("#save").onclick = async () => {
+  const b = $("#save"); b.disabled = true; $("#state").textContent = "Saving…";
+  try { await api("/api/admin/content", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(content) }); setDirty(false); toast("Saved. The live page updates within a minute."); }
+  catch (e) { setDirty(true); alert(e.message); }
+};
+document.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "s") { e.preventDefault(); if (dirty) $("#save").click(); } });
+
+async function load() {
+  const j = await api("/api/admin/content");
+  content = j.content; version = j.photoVersion;
+  await refreshPhotos();
+  setDirty(false); renderSide(); render();
+}
+load().catch((e) => { $("#main").innerHTML = ""; $("#main").append(h("p", { class: "bad" }, e.message)); });
+</script>
+</body>
+</html>

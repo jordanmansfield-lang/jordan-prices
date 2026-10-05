@@ -1,0 +1,2 @@
+// Photos that ship with the site (in /public/seed). Uploads with the same name replace them.
+export const SEED_PHOTOS = ["boat", "bride-garden", "bride-mirror", "castle-walk", "ceremony-applause", "confetti", "drone-group", "field-sun", "flash-spin", "flower-arch", "flower-arch-tall", "garden-walk", "golden-kiss", "groomsmen", "jordan", "piggyback", "silhouette-sepia", "sparklers", "stationery", "sunset-dunes"];

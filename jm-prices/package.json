@@ -1,0 +1,11 @@
+{
+  "name": "jordan-mansfield-prices",
+  "private": true,
+  "type": "module",
+  "description": "Interactive wedding brochure with a simple editor, for prices.jordanmansfieldweddings.com",
+  "scripts": { "gen": "node scripts/gen.mjs" },
+  "dependencies": {
+    "@netlify/blobs": "^11.1.3",
+    "@netlify/functions": "^6.0.2"
+  }
+}

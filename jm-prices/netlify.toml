@@ -1,0 +1,14 @@
+[build]
+  publish = "public"
+  command = "node scripts/gen.mjs"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[headers]]
+  for = "/seed/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[build.environment]
+  NODE_VERSION = "22"
