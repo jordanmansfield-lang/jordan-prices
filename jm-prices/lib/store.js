@@ -4,6 +4,8 @@ import { DEFAULT_CONTENT } from "./content.js";
 const site = () => getStore({ name: "jm-site", consistency: "strong" });
 export const photos = () => getStore({ name: "jm-photos", consistency: "strong" });
 export const enquiries = () => getStore({ name: "jm-enquiries", consistency: "strong" });
+// Separate from photos(): a one-off site asset (currently just the favicon), not part of the reusable photo library.
+export const assets = () => getStore({ name: "jm-assets", consistency: "strong" });
 
 export async function loadContent() {
   try {

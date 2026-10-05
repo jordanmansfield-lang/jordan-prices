@@ -74,8 +74,8 @@ export function renderPage(c, v) {
 <meta property="og:title" content="${esc(S.pageTitle)}">
 <meta property="og:description" content="${esc(S.metaDescription)}">
 ${c.hero?.image ? `<meta property="og:image" content="${imgUrl(c.hero.image, "l", v)}">` : ""}
-${S.favicon ? `<link rel="icon" type="image/jpeg" href="${imgUrl(S.favicon, "s", v)}">
-<link rel="apple-touch-icon" href="${imgUrl(S.favicon, "s", v)}">` : ""}
+${S.favicon === true ? `<link rel="icon" type="image/png" href="/img/v${v}/favicon.png">
+<link rel="apple-touch-icon" href="/img/v${v}/favicon.png">` : ""}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Quicksand:wght@300;400;500;600&family=Spectral:ital,wght@0,300;1,300;1,400&display=swap">

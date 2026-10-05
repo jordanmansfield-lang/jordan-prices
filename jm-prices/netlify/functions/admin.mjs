@@ -1,5 +1,5 @@
 import { purgeCache } from "@netlify/functions";
-import { loadContent, saveContent, resetContent, photos, enquiries, photoVersion, bumpPhotoVersion, json } from "../../lib/store.js";
+import { loadContent, saveContent, resetContent, photos, assets, enquiries, photoVersion, bumpPhotoVersion, json } from "../../lib/store.js";
 import { SEED_PHOTOS } from "../../lib/seed.js";
 import { ADMIN_HTML } from "../../lib/admin-html.js";
 
@@ -84,6 +84,27 @@ export default async (req) => {
   if (m && method === "DELETE") {
     await photos().delete(`${m[1]}-l.jpg`);
     await photos().delete(`${m[1]}-s.jpg`);
+    const version = await bumpPhotoVersion();
+    await refreshPage();
+    return json({ ok: true, version });
+  }
+
+  // ----- favicon (kept separate from the photo library: PNG, so it can stay transparent) -----
+  if (path === "/api/admin/favicon" && method === "PUT") {
+    const buf = await req.arrayBuffer();
+    if (!buf.byteLength) return json({ error: "That favicon was empty." }, 400);
+    if (buf.byteLength > 2_000_000) return json({ error: "That favicon is too large. Try a smaller file." }, 413);
+    const head = new Uint8Array(buf.slice(0, 8));
+    if (!(head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47)) {
+      return json({ error: "Favicons must be PNGs (so they can stay transparent)." }, 415);
+    }
+    await assets().set("favicon.png", buf, { metadata: { at: new Date().toISOString() } });
+    const version = await bumpPhotoVersion();
+    await refreshPage();
+    return json({ ok: true, version });
+  }
+  if (path === "/api/admin/favicon" && method === "DELETE") {
+    await assets().delete("favicon.png");
     const version = await bumpPhotoVersion();
     await refreshPage();
     return json({ ok: true, version });

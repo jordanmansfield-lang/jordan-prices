@@ -75,6 +75,7 @@ textarea{min-height:84px;resize:vertical;line-height:1.55}
 .focusdot{position:absolute;width:18px;height:18px;border-radius:50%;background:var(--sage);border:2px solid #fff;box-shadow:0 0 0 1px var(--ink),0 1px 4px rgba(0,0,0,.35);transform:translate(-50%,-50%);pointer-events:none}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
 .ph{background:var(--panel);border:1px solid var(--line);display:grid}
+.ph.over{border-color:var(--sage);background:var(--sage-soft)}
 .ph img{width:100%;aspect-ratio:3/2;object-fit:cover;background:var(--line)}
 .ph .meta{padding:8px 10px;display:grid;gap:4px;font-size:.8rem}
 .ph .id{font-weight:600;word-break:break-all}
@@ -153,8 +154,7 @@ const LABELS = {
   email:"Email address", instagram:"Instagram link", website:"Website link",
   coupleSubject:"Subject of the email to the couple", coupleIntro:"Opening message to the couple", coupleSignoff:"Sign-off",
   jordanSubject:"Subject of the email to you",
-  pageTitle:"Browser tab title", metaDescription:"Description shown in Google", footerLeft:"Footer (left)", footerRight:"Footer (right)",
-  favicon:"Favicon (the little browser tab icon — a square photo works best)"
+  pageTitle:"Browser tab title", metaDescription:"Description shown in Google", footerLeft:"Footer (left)", footerRight:"Footer (right)"
 };
 const LONG = new Set(["text","intro","lede","quote","coupleIntro","coupleSignoff","fromNote","thanksText","metaDescription","caption"]);
 const ITEM_TEMPLATES = {
@@ -213,7 +213,8 @@ function label(key, path) { if (path === "testimonials.items") return "Testimoni
 function fieldFor(obj, key, path) {
   const val = obj[key], id = "f-" + path.replace(/[^a-z0-9]/gi, "-");
   const set = (v) => { obj[key] = v; setDirty(true); };
-  if (key === "image" || key === "favicon") return imageField(obj, key, id);
+  if (key === "image") return imageField(obj, key, id);
+  if (key === "favicon") return faviconField(obj, key, id);
   if (key === "panelPosition") {
     const sel = h("select", { id, onchange: (e) => set(e.target.value) }, ["top left", "top right", "bottom left", "bottom right"].map((o) => h("option", { value: o, selected: o === val }, o.replace(/^./, (c) => c.toUpperCase()))));
     return h("div", { class: "field" }, h("label", { for: id }, label(key)), sel);
@@ -296,7 +297,7 @@ function imageField(obj, key, id) {
       } catch (err) { alert(err.message); }
     });
     box.append(h("span", { class: "lbl" }, label(key)), pick);
-    if (obj[key] && key !== "favicon") box.append(focusField(obj[key]));
+    if (obj[key]) box.append(focusField(obj[key]));
   };
   draw();
   return box;
@@ -327,6 +328,32 @@ function focusField(photoId) {
     h("span", { class: "lbl" }, "Focus point"),
     h("p", { class: "hint" }, "Click or drag the dot onto the part of the photo that matters most — a face, for example. It’s what stays in frame if this photo gets cropped to a different shape on smaller screens. The same photo used elsewhere keeps the same focus point."),
     frame);
+}
+
+function faviconField(obj, key) {
+  const box = h("div", { class: "field" });
+  const draw = () => {
+    box.innerHTML = "";
+    const pick = h("div", { class: "pick" },
+      obj[key] ? h("img", { src: `/img/v${version}/favicon.png`, alt: "" }) : h("div", { class: "none" }, "No favicon"),
+      h("div", {}, h("div", { class: "hint" }, obj[key] ? "Custom favicon set" : "Using the browser’s default"),
+        h("label", { class: "btn ghost small" }, obj[key] ? "Change favicon" : "Upload favicon",
+          h("input", { type: "file", accept: "image/png", hidden: true, onchange: (e) => { if (e.target.files[0]) uploadFavicon(e.target.files[0], obj, draw); } })),
+        h("span", { class: "hint" }, " or drag a PNG here"),
+        obj[key] ? h("button", { class: "btn ghost small", type: "button", onclick: () => removeFavicon(obj, draw) }, "Remove") : null));
+    ["dragenter", "dragover"].forEach((ev) => pick.addEventListener(ev, (e) => { e.preventDefault(); pick.classList.add("over"); }));
+    ["dragleave", "drop"].forEach((ev) => pick.addEventListener(ev, (e) => { e.preventDefault(); pick.classList.remove("over"); }));
+    pick.addEventListener("drop", (e) => {
+      const files = [...(e.dataTransfer ? e.dataTransfer.files : [])];
+      const file = files.find((f) => f.type === "image/png");
+      if (file) uploadFavicon(file, obj, draw);
+      else if (files.length) alert("Favicons must be PNG files, so they can keep any transparency.");
+    });
+    box.append(h("span", { class: "lbl" }, "Favicon"), pick,
+      h("p", { class: "hint" }, "A square PNG works best, at least 180×180px. Unlike the rest of the site’s photos, this stays a PNG so it can be transparent — handy since browser tabs can be light or dark."));
+  };
+  draw();
+  return box;
 }
 
 /* ---------- sections ---------- */
@@ -363,7 +390,7 @@ function usage() {
   const map = {};
   const walk = (o, where) => {
     if (Array.isArray(o)) o.forEach((x) => walk(x, where));
-    else if (o && typeof o === "object") for (const [k, v] of Object.entries(o)) { if ((k === "image" || k === "favicon") && v) (map[v] ||= new Set()).add(where); else walk(v, where); }
+    else if (o && typeof o === "object") for (const [k, v] of Object.entries(o)) { if (k === "image" && v) (map[v] ||= new Set()).add(where); else walk(v, where); }
   };
   SECTIONS.forEach((s) => walk(s.id === "packages" ? content.packages : content[s.id], s.title));
   return map;
@@ -382,15 +409,22 @@ function renderPhotos(main) {
   const grid = h("div", { class: "grid" });
   photos.forEach((p) => {
     const where = used[p.id] ? [...used[p.id]].join(", ") : "Not used yet";
-    const rep = h("input", { type: "file", accept: "image/*", hidden: true, onchange: async (e) => { if (e.target.files[0]) { await uploadOne(e.target.files[0], p.id); await refreshPhotos(); render(); toast("Photo replaced"); } } });
-    grid.append(h("div", { class: "ph" },
+    const rep = h("input", { type: "file", accept: "image/*", hidden: true, onchange: (e) => { if (e.target.files[0]) replacePhoto(p, e.target.files[0]); } });
+    const tile = h("div", { class: "ph" },
       h("img", { src: thumb(p.id), alt: "" }),
       h("div", { class: "meta" }, h("span", { class: "id" }, p.id),
         h("span", {}, p.starter ? h("span", { class: "badge" }, "Starter") : null, p.uploaded ? h("span", { class: "badge up" }, p.starter ? "Replaced" : "Uploaded") : null),
         h("span", { class: "used" }, where)),
       h("div", { class: "acts" },
         h("label", { class: "btn ghost small" }, "Replace", rep),
-        p.uploaded ? h("button", { class: "btn danger small", type: "button", onclick: () => removePhoto(p, !!used[p.id]) }, p.starter ? "Undo replace" : "Delete") : null)));
+        p.uploaded ? h("button", { class: "btn danger small", type: "button", onclick: () => removePhoto(p, !!used[p.id]) }, p.starter ? "Undo replace" : "Delete") : null));
+    ["dragenter", "dragover"].forEach((ev) => tile.addEventListener(ev, (e) => { e.preventDefault(); tile.classList.add("over"); }));
+    ["dragleave", "drop"].forEach((ev) => tile.addEventListener(ev, (e) => { e.preventDefault(); tile.classList.remove("over"); }));
+    tile.addEventListener("drop", (e) => {
+      const file = [...(e.dataTransfer ? e.dataTransfer.files : [])].find((f) => f.type.startsWith("image/"));
+      if (file) replacePhoto(p, file);
+    });
+    grid.append(tile);
   });
   main.append(grid);
 }
@@ -422,6 +456,42 @@ async function uploadOne(file, id) {
   const j = await api(`/api/admin/photos/${id}/l`, { method: "PUT", headers: { "content-type": "image/jpeg" }, body: large });
   if (j.version) version = j.version;
   return id;
+}
+
+// Unlike resize(), this never fills a background first, so transparency survives.
+async function resizePng(file, max) {
+  let bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation: "from-image" }); }
+  catch { throw new Error(`${file.name}: this browser can’t read that file type. Please export it as a PNG first.`); }
+  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas"); c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return await new Promise((res) => c.toBlob(res, "image/png"));
+}
+
+async function uploadFavicon(file, obj, draw) {
+  try {
+    const png = await resizePng(file, 512);
+    const j = await api("/api/admin/favicon", { method: "PUT", headers: { "content-type": "image/png" }, body: png });
+    if (j.version) version = j.version;
+    obj.favicon = true; setDirty(true); draw();
+    toast("Favicon uploaded");
+  } catch (err) { alert(err.message); }
+}
+
+async function removeFavicon(obj, draw) {
+  if (!confirm("Remove the custom favicon?")) return;
+  try {
+    const j = await api("/api/admin/favicon", { method: "DELETE" });
+    if (j.version) version = j.version;
+    obj.favicon = false; setDirty(true); draw();
+    toast("Favicon removed");
+  } catch (err) { alert(err.message); }
+}
+
+async function replacePhoto(p, file) {
+  try { await uploadOne(file, p.id); await refreshPhotos(); render(); toast("Photo replaced"); }
+  catch (err) { alert(err.message); }
 }
 
 async function uploadMany(files) {
@@ -500,7 +570,8 @@ document.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.
 async function load() {
   const j = await api("/api/admin/content");
   content = j.content; version = j.photoVersion;
-  if (content.site && content.site.favicon === undefined) content.site.favicon = "";
+  // Normalizes both never-set content and the old photo-library-based favicon value this field used before.
+  if (content.site && typeof content.site.favicon !== "boolean") content.site.favicon = false;
   content.imageFocus = content.imageFocus || {};
   await refreshPhotos();
   setDirty(false); renderSide(); render();

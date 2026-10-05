@@ -11,7 +11,7 @@ export const DEFAULT_CONTENT = {
     name: "Jordan Mansfield",
     pageTitle: "Jordan Mansfield Weddings",
     metaDescription: "Natural, authentic wedding photography and film by Jordan Mansfield, based in Horsham, West Sussex. Packages, prices and enquiries.",
-    favicon: "",
+    favicon: false,
     footerLeft: "Jordan Mansfield Weddings · Horsham, West Sussex",
     footerRight: "Prices for 2027 – 2028 weddings"
   },
