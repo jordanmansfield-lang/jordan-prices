@@ -257,7 +257,10 @@ ${packages}
     </div>
     <div class="quotes">
       <div class="track" id="track" tabindex="0" aria-label="Testimonials, scroll sideways">
-        ${(c.testimonials?.items || []).map((q) => `<figure class="q"><blockquote>${(q.paragraphs || []).map((p) => `<p>“${esc(p)}”</p>`).join("")}</blockquote><figcaption>${esc(q.names)}</figcaption></figure>`).join("")}
+        ${(c.testimonials?.items || []).map((q) => `<figure class="q">
+          <blockquote>${(q.paragraphs || []).map((p) => `<p>“${esc(p)}”</p>`).join("")}</blockquote>
+          <figcaption>${q.image ? `<img src="${imgUrl(q.image, "s", v)}" alt="${esc(q.alt || "")}" loading="lazy">` : ""}<span>${esc(q.names)}</span></figcaption>
+        </figure>`).join("")}
       </div>
       <div class="qnav">
         <div class="dots" id="dots">${(c.testimonials?.items || []).map((q, i) => `<button type="button" aria-label="Show ${esc(q.names)}" data-i="${i}"></button>`).join("")}</div>

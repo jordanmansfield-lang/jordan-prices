@@ -158,7 +158,7 @@ const ITEM_TEMPLATES = {
   addOns: { heading: "New extra", name: "New extra", price: 0, priceIsFrom: true, text: "" },
   "films.items": { title: "New film", note: "Watch the film", url: "https://", image: "" },
   "gallery.photos": { image: "", alt: "" },
-  "testimonials.items": { names: "", paragraphs: [""] }
+  "testimonials.items": { names: "", image: "", alt: "", paragraphs: [""] }
 };
 
 let content = null, photos = [], version = 1, current = "hero", dirty = false;
@@ -237,7 +237,8 @@ function arrayField(obj, key, path) {
   const wrap = h("div", { class: "field" });
   const rerender = () => wrap.replaceWith(arrayField(obj, key, path));
   const tplKey = ITEM_TEMPLATES[path] ? path : key;
-  const isObjects = arr.length ? typeof arr[0] === "object" : !!ITEM_TEMPLATES[tplKey];
+  const tpl = ITEM_TEMPLATES[tplKey];
+  const isObjects = arr.length ? typeof arr[0] === "object" : !!tpl;
   wrap.append(h("span", { class: "lbl" }, label(key, path)));
   if (!isObjects) {
     const list = h("div", { class: "list" });
@@ -250,13 +251,13 @@ function arrayField(obj, key, path) {
     wrap.append(list, h("div", {}, h("button", { class: "btn ghost small", type: "button", onclick: () => { arr.push(""); setDirty(true); rerender(); } }, key === "paragraphs" ? "+ Add paragraph" : "+ Add line")));
     return wrap;
   }
+  if (tpl) arr.forEach((item) => Object.keys(tpl).forEach((k) => { if (!(k in item)) item[k] = Array.isArray(tpl[k]) ? [] : tpl[k]; }));
   arr.forEach((item, i) => {
     const t = item.name || item.names || item.title || item.heading || item.big || item.alt || item.image || `Item ${i + 1}`;
     const sum = h("summary", {}, item.image ? h("img", { src: thumb(item.image), alt: "" }) : null, h("span", { class: "t" }, t), moveBtns(arr, i, rerender));
     const body = h("div", { class: "body" }, ...Object.keys(item).map((k) => fieldFor(item, k, `${path}.${i}.${k}`)));
     wrap.append(h("details", { class: "card", open: arr.length <= 4 && !["photos"].includes(key) }, sum, body));
   });
-  const tpl = ITEM_TEMPLATES[tplKey];
   wrap.append(h("div", {}, h("button", { class: "btn ghost small", type: "button", onclick: () => {
     arr.push(structuredClone(tpl || Object.fromEntries(Object.entries(arr[0] || {}).map(([k, v]) => [k, typeof v === "number" ? 0 : typeof v === "boolean" ? false : Array.isArray(v) ? [] : ""]))));
     setDirty(true); rerender();
