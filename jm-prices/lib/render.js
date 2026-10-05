@@ -168,26 +168,25 @@ ${packages}
     <div class="bgrid">
       <form class="groups" id="builder" autocomplete="on" novalidate>
         <fieldset>
-          <legend class="eyebrow">1 · Package</legend>
+          <legend class="eyebrow"><span class="num">1 · </span>Package</legend>
           <div class="opts">
             ${pk.map((p, i) => `<label class="opt"><input type="radio" name="pkg" id="pkg-${i}" value="${i}"${i === 0 ? " checked" : ""}><span class="n">${esc(p.name)}</span><span class="d">${esc(p.builderNote)}</span><span class="p">${p.priceIsFrom ? "from " : ""}${gbp(p.price)}</span></label>`).join("")}
           </div>
         </fieldset>
-        ${fe.length ? `<fieldset id="filmx">
-          <legend class="eyebrow">2 · ${esc(ex.filmHeading)}</legend>
-          <p class="hint" id="filmhint">These need a package that includes film.</p>
+        ${fe.length ? `<fieldset id="filmx"${pk[0]?.includesFilm ? "" : " hidden"}>
+          <legend class="eyebrow"><span class="num">2 · </span>${esc(ex.filmHeading)}</legend>
           <div class="opts">
             ${fe.map((f, i) => `<label class="opt check"><input type="checkbox" name="film" id="film-${i}" value="${i}"><span class="box"></span><span class="n">${esc(f.name)}</span><span class="p">${gbp(f.price)}</span></label>`).join("")}
           </div>
         </fieldset>` : ""}
         ${ad.length ? `<fieldset>
-          <legend class="eyebrow">${fe.length ? 3 : 2} · Anything else</legend>
+          <legend class="eyebrow"><span class="num">${fe.length ? 3 : 2} · </span>Anything else</legend>
           <div class="opts">
             ${ad.map((a, i) => `<label class="opt check"><input type="checkbox" name="addon" id="addon-${i}" value="${i}"><span class="box"></span><span class="n">${esc(a.name)}</span><span class="p">${a.priceIsFrom ? "from " : ""}${gbp(a.price)}</span></label>`).join("")}
           </div>
         </fieldset>` : ""}
         <fieldset>
-          <legend class="eyebrow">${(fe.length ? 1 : 0) + (ad.length ? 1 : 0) + 2} · About you &amp; your wedding</legend>
+          <legend class="eyebrow"><span class="num">${(fe.length ? 1 : 0) + (ad.length ? 1 : 0) + 2} · </span>About you &amp; your wedding</legend>
           <div class="details">
             <label for="d-names"><span>Your names <span class="req">*</span></span><input id="d-names" name="names" type="text" autocomplete="name" placeholder="e.g. Ellie &amp; Reece" required></label>
             <label for="d-email"><span>Your email <span class="req">*</span></span><input id="d-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></label>
@@ -335,7 +334,9 @@ function sel(){
 function render(){
   var s=sel(),p=s.p;if(!p)return;
   form.querySelectorAll('input[name=film]').forEach(function(i){i.disabled=!p.film});
-  var h=document.getElementById('filmhint');if(h)h.hidden=p.film;
+  var filmx=document.getElementById('filmx');if(filmx)filmx.hidden=!p.film;
+  var fs=[].slice.call(form.querySelectorAll('fieldset')).filter(function(f){return !f.hidden});
+  fs.forEach(function(f,i){var n=f.querySelector('.num');if(n)n.textContent=(i+1)+' · ';});
   var total=p.price,from=p.from,rows=['<li><span>'+esc(p.name)+'</span><span>'+(p.from?'from ':'')+gbp(p.price)+'</span></li>'];
   s.film.forEach(function(i){var f=B.film[i];total+=f.price;rows.push('<li><span>'+esc(f.name)+'</span><span>'+gbp(f.price)+'</span></li>')});
   s.add.forEach(function(i){var a=B.addOns[i];total+=a.price;if(a.from)from=true;rows.push('<li><span>'+esc(a.name)+'</span><span>'+(a.from?'from ':'')+gbp(a.price)+'</span></li>')});
