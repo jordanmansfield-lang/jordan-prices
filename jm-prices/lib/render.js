@@ -43,7 +43,7 @@ export function renderPage(c, v) {
       <ul>${(p.items || []).map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
       <div class="price">${p.priceIsFrom ? "from " : ""}£${esc(p.price)}</div>
       <div class="acts">
-        <button class="btn" type="button" data-pick="${i}">Build with this</button>
+        <button class="btn" type="button" data-pick="${i}">Customise this</button>
         ${p.linkText && p.linkUrl ? `<a class="tlink" href="${esc(p.linkUrl)}" target="_blank" rel="noopener">${esc(p.linkText)} ↗</a>` : ""}
       </div>
     </div>
