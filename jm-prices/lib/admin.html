@@ -66,7 +66,8 @@ textarea{min-height:84px;resize:vertical;line-height:1.55}
 .li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}
 .group{border-left:2px solid var(--line);padding-left:16px;margin:8px 0 22px}
 .group>.lbl{display:block;margin-bottom:10px}
-.pick{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.pick{display:flex;gap:14px;align-items:center;flex-wrap:wrap;border:1px dashed transparent;border-radius:4px;padding:6px;margin:-6px}
+.pick.over{border-color:var(--sage);background:var(--sage-soft)}
 .pick img{width:140px;height:94px;object-fit:cover;background:var(--line);border:1px solid var(--line)}
 .pick .none{width:140px;height:94px;display:grid;place-items:center;background:var(--line);color:var(--muted);font-size:.8rem}
 .focusframe{position:relative;max-width:360px;cursor:crosshair;border:1px solid var(--line);touch-action:none;user-select:none}
@@ -85,7 +86,8 @@ textarea{min-height:84px;resize:vertical;line-height:1.55}
 .drop.over{border-color:var(--sage);background:var(--sage-soft)}
 .progress{font-size:.85rem;color:var(--sage);min-height:1.3em;margin:-10px 0 16px}
 .modal{position:fixed;inset:0;background:rgba(20,20,18,.55);z-index:30;display:grid;place-items:center;padding:20px}
-.modal .inner{background:var(--paper);width:min(980px,100%);max-height:88vh;overflow:auto;padding:22px}
+.modal .inner{background:var(--paper);width:min(980px,100%);max-height:88vh;overflow:auto;padding:22px;border:2px dashed transparent}
+.modal .inner.over{border-color:var(--sage);background:var(--sage-soft)}
 .modal .head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
 .modal .head h2{margin:0 auto 0 0;font-family:var(--display);font-weight:400;letter-spacing:.12em;text-transform:uppercase;font-size:1.2rem}
 .modal .grid button{border:2px solid transparent;padding:0;background:none;cursor:pointer;text-align:left}
@@ -184,6 +186,9 @@ function setDirty(d) {
   $("#save").disabled = !d;
 }
 window.addEventListener("beforeunload", (e) => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+// Stop a photo dropped slightly off-target from navigating the browser to that file.
+window.addEventListener("dragover", (e) => e.preventDefault());
+window.addEventListener("drop", (e) => e.preventDefault());
 
 async function api(path, opts = {}) {
   const r = await fetch(path, { credentials: "same-origin", ...opts });
@@ -273,11 +278,24 @@ function imageField(obj, key, id) {
   const box = h("div", { class: "field" });
   const draw = () => {
     box.innerHTML = "";
-    box.append(h("span", { class: "lbl" }, label(key)),
-      h("div", { class: "pick" },
-        obj[key] ? h("img", { src: thumb(obj[key]), alt: "" }) : h("div", { class: "none" }, "No photo"),
-        h("div", {}, h("div", { class: "hint" }, obj[key] || ""),
-          h("button", { class: "btn ghost small", type: "button", onclick: () => openPicker(obj[key], (pid) => { obj[key] = pid; setDirty(true); draw(); }) }, obj[key] ? "Change photo" : "Choose photo"))));
+    const pick = h("div", { class: "pick" },
+      obj[key] ? h("img", { src: thumb(obj[key]), alt: "" }) : h("div", { class: "none" }, "No photo"),
+      h("div", {}, h("div", { class: "hint" }, obj[key] || ""),
+        h("button", { class: "btn ghost small", type: "button", onclick: () => openPicker(obj[key], (pid) => { obj[key] = pid; setDirty(true); draw(); }) }, obj[key] ? "Change photo" : "Choose photo"),
+        h("span", { class: "hint" }, " or drag a photo here")));
+    ["dragenter", "dragover"].forEach((ev) => pick.addEventListener(ev, (e) => { e.preventDefault(); pick.classList.add("over"); }));
+    ["dragleave", "drop"].forEach((ev) => pick.addEventListener(ev, (e) => { e.preventDefault(); pick.classList.remove("over"); }));
+    pick.addEventListener("drop", async (e) => {
+      const file = [...(e.dataTransfer ? e.dataTransfer.files : [])].find((f) => f.type.startsWith("image/"));
+      if (!file) return;
+      try {
+        const pid = await uploadOne(file, uniqueId(slug(file.name)));
+        await refreshPhotos();
+        obj[key] = pid; setDirty(true); draw();
+        toast("Photo uploaded");
+      } catch (err) { alert(err.message); }
+    });
+    box.append(h("span", { class: "lbl" }, label(key)), pick);
     if (obj[key] && key !== "favicon") box.append(focusField(obj[key]));
   };
   draw();
@@ -431,6 +449,18 @@ function closePicker() { $("#picker").hidden = true; }
 $("#pickClose").onclick = closePicker;
 $("#picker").addEventListener("click", (e) => { if (e.target.id === "picker") closePicker(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#picker").hidden) closePicker(); });
+const pickerInner = $("#picker .inner");
+["dragenter", "dragover"].forEach((ev) => pickerInner.addEventListener(ev, (e) => { e.preventDefault(); pickerInner.classList.add("over"); }));
+["dragleave", "drop"].forEach((ev) => pickerInner.addEventListener(ev, (e) => { e.preventDefault(); pickerInner.classList.remove("over"); }));
+pickerInner.addEventListener("drop", async (e) => {
+  const file = [...(e.dataTransfer ? e.dataTransfer.files : [])].find((f) => f.type.startsWith("image/"));
+  if (!file) return;
+  const cb = pickCb; closePicker(); toast("Uploading…");
+  try {
+    const id = await uploadOne(file, uniqueId(slug(file.name)));
+    await refreshPhotos(); cb(id); toast("Photo uploaded");
+  } catch (err) { alert(err.message); }
+});
 $("#pickUpload").onchange = async (e) => {
   const f = e.target.files[0]; if (!f) return;
   const cb = pickCb; closePicker(); toast("Uploading…");
