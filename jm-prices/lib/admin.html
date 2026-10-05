@@ -131,7 +131,7 @@ const SECTIONS = [
   { id: "testimonials", title: "Kind words", lead: "Testimonials from your couples." },
   { id: "contact", title: "Contact", lead: "The closing section with your email and links." },
   { id: "emails", title: "Enquiry emails", lead: "What the automatic emails say." },
-  { id: "site", title: "Page details", lead: "The browser tab title, search description and footer." }
+  { id: "site", title: "Page details", lead: "The browser tab title & icon, search description and footer." }
 ];
 const LABELS = {
   title:"Title", subtitle:"Subtitle", year:"Year line", image:"Photo", alt:"Photo description (for screen readers & Google)",
@@ -148,7 +148,8 @@ const LABELS = {
   email:"Email address", instagram:"Instagram link", website:"Website link",
   coupleSubject:"Subject of the email to the couple", coupleIntro:"Opening message to the couple", coupleSignoff:"Sign-off",
   jordanSubject:"Subject of the email to you",
-  pageTitle:"Browser tab title", metaDescription:"Description shown in Google", footerLeft:"Footer (left)", footerRight:"Footer (right)"
+  pageTitle:"Browser tab title", metaDescription:"Description shown in Google", footerLeft:"Footer (left)", footerRight:"Footer (right)",
+  favicon:"Favicon (the little browser tab icon — a square photo works best)"
 };
 const LONG = new Set(["text","intro","lede","quote","coupleIntro","coupleSignoff","fromNote","thanksText","metaDescription","caption"]);
 const ITEM_TEMPLATES = {
@@ -204,7 +205,7 @@ function label(key, path) { if (path === "testimonials.items") return "Testimoni
 function fieldFor(obj, key, path) {
   const val = obj[key], id = "f-" + path.replace(/[^a-z0-9]/gi, "-");
   const set = (v) => { obj[key] = v; setDirty(true); };
-  if (key === "image") return imageField(obj, key, id);
+  if (key === "image" || key === "favicon") return imageField(obj, key, id);
   if (key === "panelPosition") {
     const sel = h("select", { id, onchange: (e) => set(e.target.value) }, ["top left", "top right", "bottom left", "bottom right"].map((o) => h("option", { value: o, selected: o === val }, o.replace(/^./, (c) => c.toUpperCase()))));
     return h("div", { class: "field" }, h("label", { for: id }, label(key)), sel);
@@ -269,7 +270,7 @@ function imageField(obj, key, id) {
   const box = h("div", { class: "field" });
   const draw = () => {
     box.innerHTML = "";
-    box.append(h("span", { class: "lbl" }, "Photo"),
+    box.append(h("span", { class: "lbl" }, label(key)),
       h("div", { class: "pick" },
         obj[key] ? h("img", { src: thumb(obj[key]), alt: "" }) : h("div", { class: "none" }, "No photo"),
         h("div", {}, h("div", { class: "hint" }, obj[key] || ""),
@@ -313,7 +314,7 @@ function usage() {
   const map = {};
   const walk = (o, where) => {
     if (Array.isArray(o)) o.forEach((x) => walk(x, where));
-    else if (o && typeof o === "object") for (const [k, v] of Object.entries(o)) { if (k === "image" && v) (map[v] ||= new Set()).add(where); else walk(v, where); }
+    else if (o && typeof o === "object") for (const [k, v] of Object.entries(o)) { if ((k === "image" || k === "favicon") && v) (map[v] ||= new Set()).add(where); else walk(v, where); }
   };
   SECTIONS.forEach((s) => walk(s.id === "packages" ? content.packages : content[s.id], s.title));
   return map;
@@ -436,6 +437,7 @@ document.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.
 async function load() {
   const j = await api("/api/admin/content");
   content = j.content; version = j.photoVersion;
+  if (content.site && content.site.favicon === undefined) content.site.favicon = "";
   await refreshPhotos();
   setDirty(false); renderSide(); render();
 }
