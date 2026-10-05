@@ -421,7 +421,9 @@ async function renderEnquiries(main) {
         h("td", {}, h("strong", {}, e.names), h("br"), h("a", { href: `mailto:${e.email}` }, e.email), e.phone ? [h("br"), e.phone] : null),
         h("td", {}, e.date || "–", e.venue ? [h("br"), e.venue] : null),
         h("td", {}, (e.lines || []).map((l) => [l.name, h("br")]), h("strong", {}, e.totalText), e.message ? [h("br"), h("span", { class: "hint" }, e.message)] : null),
-        h("td", {}, h("span", { class: e.sentToJordan ? "ok" : "bad" }, e.sentToJordan ? "✓ to you" : "✕ to you"), h("br"), h("span", { class: e.sentToCouple ? "ok" : "bad" }, e.sentToCouple ? "✓ to couple" : "✕ to couple"))))));
+        h("td", {},
+          h("span", { class: e.sentToJordan ? "ok" : "bad" }, e.sentToJordan ? "✓ to you" : "✕ to you"), e.error ? [" ", h("span", { class: "hint" }, "(", e.error, ")")] : null, h("br"),
+          h("span", { class: e.sentToCouple ? "ok" : "bad" }, e.sentToCouple ? "✓ to couple" : "✕ to couple"), e.coupleError ? [" ", h("span", { class: "hint" }, "(", e.coupleError, ")")] : null)))));
     holder.innerHTML = ""; holder.append(t);
   } catch (err) { holder.innerHTML = ""; holder.append(h("p", { class: "bad" }, err.message)); }
 }
