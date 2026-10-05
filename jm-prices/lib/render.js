@@ -11,6 +11,13 @@ function imgTag(id, alt, v, { sizes = "100vw", lazy = true, extra = "" } = {}) {
   return `<img src="${s}" srcset="${s} 900w, ${l} 2000w" sizes="${sizes}" alt="${esc(alt)}"${lazy ? ' loading="lazy"' : ' fetchpriority="high"'} ${extra}>`;
 }
 
+const clampPct = (n) => (Number.isFinite(+n) ? Math.max(0, Math.min(100, +n)) : 50);
+// The part of a photo to keep in frame when object-fit:cover crops it, from the admin-set focus point.
+const focusAttr = (c, id) => {
+  const f = c.imageFocus && c.imageFocus[id];
+  return f ? `style="object-position:${clampPct(f.x)}% ${clampPct(f.y)}%"` : "";
+};
+
 const EXTRA_CSS = `
 .enq{display:grid;gap:12px}
 .details textarea{font:inherit;font-size:.95rem;color:var(--ink);background:var(--paper);border:1px solid var(--line);padding:11px 12px;width:100%;min-width:0;min-height:96px;resize:vertical}
@@ -36,7 +43,7 @@ export function renderPage(c, v) {
     const chapter = p.chapterTitle ? `<div class="chapter wrap">${i === 0 && c.packagesIntro?.eyebrow ? `<div class="eyebrow">${esc(c.packagesIntro.eyebrow)}</div>` : ""}<h2 class="title">${esc(p.chapterTitle)}</h2>${p.chapterPrice ? `<div class="price">${esc(p.chapterPrice)}</div>` : ""}</div>` : "";
     return `${chapter}
   <div class="${cls}">
-    ${imgTag(p.image, p.alt, v)}
+    ${imgTag(p.image, p.alt, v, { extra: focusAttr(c, p.image) })}
     <div class="card">
       <h3>${esc(p.name)}</h3>
       ${p.lede ? `<p class="lede">${esc(p.lede)}</p>` : ""}
@@ -94,7 +101,7 @@ ${S.favicon ? `<link rel="icon" type="image/jpeg" href="${imgUrl(S.favicon, "s",
 </nav>
 
 <header class="hero" id="top">
-  ${imgTag(c.hero?.image, c.hero?.alt, v, { lazy: false })}
+  ${imgTag(c.hero?.image, c.hero?.alt, v, { lazy: false, extra: focusAttr(c, c.hero?.image) })}
   <div class="over">
     <h1>${esc(c.hero?.title)}</h1>
     <div class="sub">${esc(c.hero?.subtitle)}</div>
@@ -107,7 +114,7 @@ ${S.favicon ? `<link rel="icon" type="image/jpeg" href="${imgUrl(S.favicon, "s",
   <div class="wrap">
     <div class="about">
       <figure>
-        ${imgTag(c.about?.image, c.about?.alt, v, { sizes: "(max-width:820px) 100vw, 45vw" })}
+        ${imgTag(c.about?.image, c.about?.alt, v, { sizes: "(max-width:820px) 100vw, 45vw", extra: focusAttr(c, c.about?.image) })}
         ${c.about?.caption ? `<figcaption>${esc(c.about.caption)}</figcaption>` : ""}
       </figure>
       <div class="text">
@@ -153,7 +160,7 @@ ${packages}
       </div>`).join("")}
     </div>
     ${ex.drone?.title ? `<div class="drone">
-      ${imgTag(ex.drone.image, ex.drone.alt, v, { sizes: "(max-width:820px) 100vw, 60vw" })}
+      ${imgTag(ex.drone.image, ex.drone.alt, v, { sizes: "(max-width:820px) 100vw, 60vw", extra: focusAttr(c, ex.drone.image) })}
       <div class="t">
         <div class="eyebrow">${esc(ex.drone.eyebrow)}</div>
         <h3 class="spaced" style="margin:0;font-size:1rem;letter-spacing:.32em">${esc(ex.drone.title)}</h3>
@@ -232,7 +239,7 @@ ${packages}
     </div>
     <div class="films">
       ${(c.films?.items || []).map((f) => `<a class="film" href="${esc(f.url)}" target="_blank" rel="noopener">
-        ${imgTag(f.image, "", v, { sizes: "(max-width:680px) 100vw, 50vw" })}
+        ${imgTag(f.image, "", v, { sizes: "(max-width:680px) 100vw, 50vw", extra: focusAttr(c, f.image) })}
         <span class="cap"><span class="play" aria-hidden="true"></span><span>${esc(f.title)}</span><em>${esc(f.note)} ↗</em></span>
       </a>`).join("")}
     </div>
@@ -246,7 +253,7 @@ ${packages}
       <h2 class="title">${esc(c.gallery?.heading)}</h2>
     </div>
     <div class="gallery" id="gal">
-      ${(c.gallery?.photos || []).map((g, i) => `<button type="button" data-i="${i}" data-full="${imgUrl(g.image, "l", v)}" aria-label="Open photo: ${esc(g.alt)}"><img src="${imgUrl(g.image, "s", v)}" alt="${esc(g.alt)}" loading="lazy"></button>`).join("")}
+      ${(c.gallery?.photos || []).map((g, i) => `<button type="button" data-i="${i}" data-full="${imgUrl(g.image, "l", v)}" aria-label="Open photo: ${esc(g.alt)}"><img src="${imgUrl(g.image, "s", v)}" alt="${esc(g.alt)}" loading="lazy" ${focusAttr(c, g.image)}></button>`).join("")}
     </div>
   </div>
 </section>
@@ -261,7 +268,7 @@ ${packages}
       <div class="track" id="track" tabindex="0" aria-label="Testimonials, scroll sideways">
         ${(c.testimonials?.items || []).map((q) => `<figure class="q">
           <blockquote>${(q.paragraphs || []).map((p) => `<p>“${esc(p)}”</p>`).join("")}</blockquote>
-          <figcaption>${q.image ? `<img src="${imgUrl(q.image, "s", v)}" alt="${esc(q.alt || "")}" loading="lazy">` : ""}<span>${esc(q.names)}</span></figcaption>
+          <figcaption>${q.image ? `<img src="${imgUrl(q.image, "s", v)}" alt="${esc(q.alt || "")}" loading="lazy" ${focusAttr(c, q.image)}>` : ""}<span>${esc(q.names)}</span></figcaption>
         </figure>`).join("")}
       </div>
       <div class="qnav">
@@ -273,7 +280,7 @@ ${packages}
 </section>
 
 <section id="contact" class="contact">
-  ${imgTag(c.contact?.image, "", v)}
+  ${imgTag(c.contact?.image, "", v, { extra: focusAttr(c, c.contact?.image) })}
   <div class="over">
     <div class="eyebrow" style="color:rgba(255,255,255,.8)">${esc(c.contact?.eyebrow)}</div>
     <h2 class="title">${esc(c.contact?.heading)}</h2>

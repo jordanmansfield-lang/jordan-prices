@@ -69,6 +69,9 @@ textarea{min-height:84px;resize:vertical;line-height:1.55}
 .pick{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .pick img{width:140px;height:94px;object-fit:cover;background:var(--line);border:1px solid var(--line)}
 .pick .none{width:140px;height:94px;display:grid;place-items:center;background:var(--line);color:var(--muted);font-size:.8rem}
+.focusframe{position:relative;max-width:360px;cursor:crosshair;border:1px solid var(--line);touch-action:none;user-select:none}
+.focusframe img{width:100%;height:auto;display:block;pointer-events:none}
+.focusdot{position:absolute;width:18px;height:18px;border-radius:50%;background:var(--sage);border:2px solid #fff;box-shadow:0 0 0 1px var(--ink),0 1px 4px rgba(0,0,0,.35);transform:translate(-50%,-50%);pointer-events:none}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
 .ph{background:var(--panel);border:1px solid var(--line);display:grid}
 .ph img{width:100%;aspect-ratio:3/2;object-fit:cover;background:var(--line)}
@@ -275,9 +278,37 @@ function imageField(obj, key, id) {
         obj[key] ? h("img", { src: thumb(obj[key]), alt: "" }) : h("div", { class: "none" }, "No photo"),
         h("div", {}, h("div", { class: "hint" }, obj[key] || ""),
           h("button", { class: "btn ghost small", type: "button", onclick: () => openPicker(obj[key], (pid) => { obj[key] = pid; setDirty(true); draw(); }) }, obj[key] ? "Change photo" : "Choose photo"))));
+    if (obj[key] && key !== "favicon") box.append(focusField(obj[key]));
   };
   draw();
   return box;
+}
+
+function focusField(photoId) {
+  content.imageFocus = content.imageFocus || {};
+  const f = content.imageFocus[photoId] || { x: 50, y: 50 };
+  const dot = h("span", { class: "focusdot", style: `left:${f.x}%;top:${f.y}%` });
+  const frame = h("div", { class: "focusframe" }, h("img", { src: thumb(photoId), alt: "", draggable: "false" }), dot);
+  const setPoint = (clientX, clientY) => {
+    const r = frame.getBoundingClientRect();
+    const x = Math.round(Math.max(0, Math.min(100, ((clientX - r.left) / r.width) * 100)));
+    const y = Math.round(Math.max(0, Math.min(100, ((clientY - r.top) / r.height) * 100)));
+    content.imageFocus[photoId] = { x, y };
+    dot.style.left = x + "%"; dot.style.top = y + "%";
+    setDirty(true);
+  };
+  frame.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    setPoint(e.clientX, e.clientY);
+    const move = (ev) => setPoint(ev.clientX, ev.clientY);
+    const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  });
+  return h("div", { class: "field" },
+    h("span", { class: "lbl" }, "Focus point"),
+    h("p", { class: "hint" }, "Click or drag the dot onto the part of the photo that matters most — a face, for example. It’s what stays in frame if this photo gets cropped to a different shape on smaller screens. The same photo used elsewhere keeps the same focus point."),
+    frame);
 }
 
 /* ---------- sections ---------- */
@@ -440,6 +471,7 @@ async function load() {
   const j = await api("/api/admin/content");
   content = j.content; version = j.photoVersion;
   if (content.site && content.site.favicon === undefined) content.site.favicon = "";
+  content.imageFocus = content.imageFocus || {};
   await refreshPhotos();
   setDirty(false); renderSide(); render();
 }

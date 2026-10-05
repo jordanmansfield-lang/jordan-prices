@@ -1,6 +1,12 @@
 // The starting content for the site. Once you save anything in /admin,
 // the saved version (stored in Cloudflare KV) is used instead of this.
 export const DEFAULT_CONTENT = {
+  // The part of each photo (by photo id) to keep in frame when it's cropped
+  // to a different aspect ratio. x/y are percentages; 50/50 is centered.
+  imageFocus: {
+    "sunset-dunes": { x: 62, y: 40 },
+    jordan: { x: 35, y: 50 }
+  },
   site: {
     name: "Jordan Mansfield",
     pageTitle: "Jordan Mansfield Weddings",
