@@ -76,7 +76,10 @@ ${c.hero?.image ? `<meta property="og:image" content="${imgUrl(c.hero.image, "l"
 <nav class="nav" aria-label="Sections">
   <div class="wrap">
     <a class="mark spaced" href="#top">${esc(S.name)}</a>
-    <ul>
+    <button class="navbtn" type="button" id="navbtn" aria-expanded="false" aria-controls="navlist" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul id="navlist">
       <li><a class="l" href="#about">About</a></li>
       <li><a class="l" href="#packages">Packages</a></li>
       <li><a class="l" href="#build">Build your day</a></li>
@@ -297,6 +300,19 @@ ${packages}
 
 const CLIENT_JS = `
 (function(){
+/* mobile nav drawer */
+var navbtn=document.getElementById('navbtn'),navlist=document.getElementById('navlist');
+function setNav(open){
+  navbtn.setAttribute('aria-expanded',open?'true':'false');
+  navlist.classList.toggle('open',open);
+  document.documentElement.style.overflow=open?'hidden':'';
+  if(open){var first=navlist.querySelector('a');if(first)first.focus();}
+}
+navbtn.addEventListener('click',function(){setNav(navbtn.getAttribute('aria-expanded')!=='true')});
+navlist.addEventListener('click',function(e){if(e.target.closest('a'))setNav(false)});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&navbtn.getAttribute('aria-expanded')==='true'){setNav(false);navbtn.focus()}});
+window.addEventListener('resize',function(){if(window.innerWidth>760&&navbtn.getAttribute('aria-expanded')==='true')setNav(false)});
+
 /* gallery lightbox */
 var gal=document.getElementById('gal'),lb=document.getElementById('lb'),lbimg=document.getElementById('lbimg');
 var items=[].slice.call(gal.querySelectorAll('button')),cur=0,lastFocus=null;
