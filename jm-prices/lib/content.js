@@ -189,6 +189,10 @@ export const DEFAULT_CONTENT = {
       { type: "Celebrant", name: "", website: "", instagram: "" }
     ]
   },
+  // Bespoke per-venue price list pages, e.g. prices.jordanmansfieldweddings.com/venue/{slug}.
+  // Each one renders the standard page (same packages, prices, suppliers, contact) with this
+  // venue's own intro, photos and sample film added in near the top.
+  venues: [],
   contact: {
     eyebrow: "Let’s talk",
     heading: "Tell me about your wedding",

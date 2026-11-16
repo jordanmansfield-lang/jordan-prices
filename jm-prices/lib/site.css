@@ -182,6 +182,12 @@ textarea#msg{position:absolute;left:-9999px;width:1px;height:1px}
 .lb button:hover{opacity:1}
 .lb .x{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:8px;font-size:1.6rem}
 
+/* venue */
+.venue-hero{margin-top:clamp(24px,3.4vw,40px)}
+.venue-hero img{width:100%;max-height:560px;object-fit:cover}
+.venue-video{aspect-ratio:16/9;margin-top:clamp(24px,3.4vw,40px);background:#000}
+.venue-video iframe{width:100%;height:100%;border:0;display:block}
+
 /* testimonials */
 .quotes{position:relative;margin-top:clamp(28px,4vw,48px)}
 .track{display:flex;gap:clamp(16px,3vw,32px);overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:4px;align-items:flex-start}

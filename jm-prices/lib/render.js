@@ -18,6 +18,18 @@ const focusAttr = (c, id) => {
   return f ? `style="object-position:${clampPct(f.x)}% ${clampPct(f.y)}%"` : "";
 };
 
+// Turns an ordinary YouTube/Vimeo link into its embeddable form. Returns "" when the
+// link isn't recognised, so callers can fall back to a plain "watch it" link instead.
+function videoEmbedSrc(url) {
+  if (!url) return "";
+  let m = String(url).match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i);
+  if (m) return `https://www.youtube.com/embed/${m[1]}`;
+  m = String(url).match(/vimeo\.com\/(?:video\/)?(\d+)/i);
+  if (m) return `https://player.vimeo.com/video/${m[1]}`;
+  if (/^https:\/\/player\.vimeo\.com\/video\/\d+/i.test(url)) return url;
+  return "";
+}
+
 const EXTRA_CSS = `
 .enq{display:grid;gap:12px}
 .details textarea{font:inherit;font-size:.95rem;color:var(--ink);background:var(--paper);border:1px solid var(--line);padding:11px 12px;width:100%;min-width:0;min-height:96px;resize:vertical}
@@ -30,13 +42,15 @@ const EXTRA_CSS = `
 .btn[disabled]{opacity:.55;cursor:progress}
 `;
 
-export function renderPage(c, v) {
+export function renderPage(c, v, venue) {
   const S = c.site || {};
   const pk = c.packages || [];
   const ex = c.extras || {};
   const fe = ex.filmExtras || [];
   const ad = ex.addOns || [];
   const suppliers = (c.suppliers?.items || []).filter((s) => s.name);
+  const venuePhotos = venue ? (venue.photos || []).filter((g) => g.image) : [];
+  const venueVideo = venue ? videoEmbedSrc(venue.video) : "";
 
   const packages = pk.map((p, i) => {
     const pos = String(p.panelPosition || "");
@@ -65,16 +79,20 @@ export function renderPage(c, v) {
     droneLine: ex.drone?.builderLine || ""
   };
 
+  const pageTitle = venue?.name ? `${S.pageTitle} — ${venue.name}` : S.pageTitle;
+  const metaDescription = String(venue?.intro || S.metaDescription || "").replace(/\s+/g, " ").trim();
+  const ogImage = venue?.image || c.hero?.image;
+
   return `<!doctype html>
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>${esc(S.pageTitle)}</title>
-<meta name="description" content="${esc(S.metaDescription)}">
-<meta property="og:title" content="${esc(S.pageTitle)}">
-<meta property="og:description" content="${esc(S.metaDescription)}">
-${c.hero?.image ? `<meta property="og:image" content="${imgUrl(c.hero.image, "l", v)}">` : ""}
+<title>${esc(pageTitle)}</title>
+<meta name="description" content="${esc(metaDescription)}">
+<meta property="og:title" content="${esc(pageTitle)}">
+<meta property="og:description" content="${esc(metaDescription)}">
+${ogImage ? `<meta property="og:image" content="${imgUrl(ogImage, "l", v)}">` : ""}
 ${S.favicon === true ? `<link rel="icon" type="image/png" href="/img/v${v}/favicon.png">
 <link rel="apple-touch-icon" href="/img/v${v}/favicon.png">` : ""}
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -112,6 +130,21 @@ ${S.favicon === true ? `<link rel="icon" type="image/png" href="/img/v${v}/favic
 </header>
 
 <main>
+${venue ? `<section id="venue" class="block" style="padding-bottom:0">
+  <div class="wrap">
+    <div class="chapter" style="padding-top:0">
+      <div class="eyebrow">Tailored for your venue</div>
+      <h2 class="title">${esc(venue.name)}</h2>
+      ${venue.intro ? `<p class="small" style="max-width:60ch;margin-top:6px">${nl2br(venue.intro)}</p>` : ""}
+    </div>
+    ${venue.image ? `<div class="venue-hero">${imgTag(venue.image, venue.alt, v, { sizes: "(max-width:1100px) 100vw, 1100px", extra: focusAttr(c, venue.image) })}</div>` : ""}
+    ${venueVideo ? `<div class="venue-video"><iframe src="${esc(venueVideo)}" title="Sample film from ${esc(venue.name)}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>` : ""}
+    ${venuePhotos.length ? `<div class="gallery" id="vgal">
+      ${venuePhotos.map((g, i) => `<button type="button" data-i="${i}" data-full="${imgUrl(g.image, "l", v)}" aria-label="Open photo: ${esc(g.alt)}"><img src="${imgUrl(g.image, "s", v)}" alt="${esc(g.alt)}" loading="lazy" ${focusAttr(c, g.image)}></button>`).join("")}
+    </div>` : ""}
+    ${venue.linkText && venue.linkUrl ? `<p style="margin-top:24px"><a class="tlink" href="${esc(venue.linkUrl)}" target="_blank" rel="noopener">${esc(venue.linkText)} ↗</a></p>` : ""}
+  </div>
+</section>` : ""}
 <section id="about" class="block">
   <div class="wrap">
     <div class="about">
@@ -348,10 +381,16 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&navbtn.getA
 window.addEventListener('resize',function(){if(window.innerWidth>760&&navbtn.getAttribute('aria-expanded')==='true')setNav(false)});
 
 /* gallery lightbox */
-var gal=document.getElementById('gal'),lb=document.getElementById('lb'),lbimg=document.getElementById('lbimg');
-var items=[].slice.call(gal.querySelectorAll('button')),cur=0,lastFocus=null;
-function show(i){cur=(i+items.length)%items.length;lbimg.src=items[cur].dataset.full;lbimg.alt=items[cur].querySelector('img').alt;}
-gal.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;lastFocus=b;show(+b.dataset.i);lb.hidden=false;document.getElementById('lbx').focus();});
+var lb=document.getElementById('lb'),lbimg=document.getElementById('lbimg');
+var activeItems=[],cur=0,lastFocus=null;
+function show(i){cur=(i+activeItems.length)%activeItems.length;var b=activeItems[cur];lbimg.src=b.dataset.full;lbimg.alt=b.querySelector('img').alt;}
+function bindGallery(id){
+  var gal=document.getElementById(id); if(!gal) return;
+  var items=[].slice.call(gal.querySelectorAll('button'));
+  gal.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;activeItems=items;lastFocus=b;show(+b.dataset.i);lb.hidden=false;document.getElementById('lbx').focus();});
+}
+bindGallery('gal');
+bindGallery('vgal');
 function close(){lb.hidden=true;if(lastFocus)lastFocus.focus();}
 document.getElementById('lbx').onclick=close;
 document.getElementById('lbprev').onclick=function(){show(cur-1)};

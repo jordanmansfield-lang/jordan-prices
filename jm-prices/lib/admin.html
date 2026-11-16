@@ -136,6 +136,7 @@ const SECTIONS = [
   { id: "gallery", title: "Gallery", lead: "The photo grid. Drag order with the arrows." },
   { id: "testimonials", title: "Kind words", lead: "Testimonials from your couples." },
   { id: "suppliers", title: "Suppliers", lead: "Other suppliers you recommend — hair, makeup, florist, decor and so on. Link to their website, Instagram, or both. Add your own supplier types too; only ones with a name show on the live site." },
+  { id: "venues", title: "Venues", lead: "Bespoke price list pages for venues you shoot at regularly, each with its own intro, photos and sample film. Every venue page also shows your normal packages, prices, suppliers and contact details — you just add what's special about that venue. Each gets its own link to send out: prices.jordanmansfieldweddings.com/venue/your-slug." },
   { id: "contact", title: "Contact", lead: "The closing section with your email and links." },
   { id: "emails", title: "Enquiry emails", lead: "What the automatic emails say." },
   { id: "site", title: "Page details", lead: "The browser tab title & icon, search description and footer." }
@@ -153,6 +154,8 @@ const LABELS = {
   intro:"Intro text", fromNote:"Note when a “from” price is chosen", thanksHeading:"Thank-you heading (after sending)", thanksText:"Thank-you message",
   items_films:"Film tiles", note:"Second line", url:"Link address", photos:"Photos", names:"Couple’s names",
   type:"Supplier type (e.g. Hair, Makeup, Florist — or your own)",
+  slug:"Web address (lowercase letters, numbers and dashes only — e.g. the-barn-at-combe). Becomes prices.jordanmansfieldweddings.com/venue/this",
+  video:"Sample film (paste a normal YouTube or Vimeo link — it’ll play right on the page)",
   email:"Email address", instagram:"Instagram link", website:"Website link",
   coupleSubject:"Subject of the email to the couple", coupleIntro:"Opening message to the couple", coupleSignoff:"Sign-off",
   jordanSubject:"Subject of the email to you",
@@ -167,7 +170,9 @@ const ITEM_TEMPLATES = {
   "films.items": { title: "New film", note: "Watch the film", url: "https://", image: "" },
   "gallery.photos": { image: "", alt: "" },
   "testimonials.items": { names: "", image: "", alt: "", paragraphs: [""] },
-  "suppliers.items": { type: "New supplier type", name: "", website: "", instagram: "" }
+  "suppliers.items": { type: "New supplier type", name: "", website: "", instagram: "" },
+  venues: { slug: "", name: "New venue", intro: "", image: "", alt: "", photos: [], video: "", linkText: "", linkUrl: "" },
+  photos: { image: "", alt: "" }
 };
 
 let content = null, photos = [], version = 1, current = "hero", dirty = false;
@@ -234,7 +239,7 @@ function fieldFor(obj, key, path) {
   const long = LONG.has(key) || String(val || "").length > 90;
   const input = long
     ? h("textarea", { id, oninput: (e) => set(e.target.value) }, val ?? "")
-    : h("input", { type: /url|instagram|website/i.test(key) ? "url" : "text", id, value: val ?? "", oninput: (e) => set(e.target.value) });
+    : h("input", { type: /url|instagram|website|video/i.test(key) ? "url" : "text", id, value: val ?? "", oninput: (e) => set(e.target.value) });
   return h("div", { class: "field" }, h("label", { for: id }, label(key)), input);
 }
 
@@ -371,6 +376,8 @@ function render() {
     main.append(arrayField(content, "packages", "packages"));
   } else if (s.id === "facts") {
     main.append(arrayField(content, "facts", "facts"));
+  } else if (s.id === "venues") {
+    main.append(arrayField(content, "venues", "venues"));
   } else {
     const obj = content[s.id];
     Object.keys(obj).forEach((k) => main.append(fieldFor(obj, k, `${s.id}.${k}`)));
