@@ -18,16 +18,21 @@ const focusAttr = (c, id) => {
   return f ? `style="object-position:${clampPct(f.x)}% ${clampPct(f.y)}%"` : "";
 };
 
-// Turns an ordinary YouTube/Vimeo link into its embeddable form. Returns "" when the
-// link isn't recognised, so callers can fall back to a plain "watch it" link instead.
-function videoEmbedSrc(url) {
-  if (!url) return "";
-  let m = String(url).match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i);
-  if (m) return `https://www.youtube.com/embed/${m[1]}`;
-  m = String(url).match(/vimeo\.com\/(?:video\/)?(\d+)/i);
-  if (m) return `https://player.vimeo.com/video/${m[1]}`;
-  if (/^https:\/\/player\.vimeo\.com\/video\/\d+/i.test(url)) return url;
-  return "";
+// Recognises a pasted video link and says how to embed it: an <iframe> for YouTube/Vimeo,
+// or a native <video> tag for a direct file link (e.g. a JMW Films "copy embed link", or any
+// other plain .mp4/.webm URL) — those aren't pages to frame, they're the media file itself.
+// Returns null when the link isn't recognised, so callers can fall back to a plain "watch it" link.
+function videoEmbed(url) {
+  if (!url) return null;
+  const s = String(url);
+  let m = s.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i);
+  if (m) return { type: "iframe", src: `https://www.youtube.com/embed/${m[1]}` };
+  m = s.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
+  if (m) return { type: "iframe", src: `https://player.vimeo.com/video/${m[1]}` };
+  if (/^https:\/\/player\.vimeo\.com\/video\/\d+/i.test(s)) return { type: "iframe", src: s };
+  if (/^https:\/\/films\.jordanmansfieldweddings\.com\/[^/]+\/watch\/[^/?#]+/i.test(s)) return { type: "video", src: s };
+  if (/\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(s)) return { type: "video", src: s };
+  return null;
 }
 
 const EXTRA_CSS = `
@@ -50,7 +55,7 @@ export function renderPage(c, v, venue) {
   const ad = ex.addOns || [];
   const suppliers = (c.suppliers?.items || []).filter((s) => s.name);
   const venuePhotos = venue ? (venue.photos || []).filter((g) => g.image) : [];
-  const venueVideo = venue ? videoEmbedSrc(venue.video) : "";
+  const venueVideo = venue ? videoEmbed(venue.video) : null;
 
   const packages = pk.map((p, i) => {
     const pos = String(p.panelPosition || "");
@@ -138,7 +143,9 @@ ${venue ? `<section id="venue" class="block" style="padding-bottom:0">
       ${venue.intro ? `<p class="small" style="max-width:60ch;margin-top:6px">${nl2br(venue.intro)}</p>` : ""}
     </div>
     ${venue.image ? `<div class="venue-hero">${imgTag(venue.image, venue.alt, v, { sizes: "(max-width:1100px) 100vw, 1100px", extra: focusAttr(c, venue.image) })}</div>` : ""}
-    ${venueVideo ? `<div class="venue-video"><iframe src="${esc(venueVideo)}" title="Sample film from ${esc(venue.name)}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>` : ""}
+    ${venueVideo ? `<div class="venue-video">${venueVideo.type === "iframe"
+      ? `<iframe src="${esc(venueVideo.src)}" title="Sample film from ${esc(venue.name)}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`
+      : `<video src="${esc(venueVideo.src)}" controls preload="metadata" playsinline aria-label="Sample film from ${esc(venue.name)}"></video>`}</div>` : ""}
     ${venuePhotos.length ? `<div class="gallery" id="vgal">
       ${venuePhotos.map((g, i) => `<button type="button" data-i="${i}" data-full="${imgUrl(g.image, "l", v)}" aria-label="Open photo: ${esc(g.alt)}"><img src="${imgUrl(g.image, "s", v)}" alt="${esc(g.alt)}" loading="lazy" ${focusAttr(c, g.image)}></button>`).join("")}
     </div>` : ""}
