@@ -198,6 +198,12 @@ textarea#msg{position:absolute;left:-9999px;width:1px;height:1px}
 .arrows button{width:44px;height:44px;border:1px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer;font-size:1.1rem}
 .arrows button:hover{background:var(--ink);color:var(--paper)}
 
+/* suppliers */
+.suppliers{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:clamp(28px,4vw,48px)}
+.supplier{border:1px solid var(--line);padding:22px;display:grid;gap:6px;align-content:start}
+.supplier .name{font-family:var(--display);font-weight:400;font-size:1.1rem;letter-spacing:.02em}
+.supplier .slinks{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
+
 /* contact */
 .contact{position:relative;color:#fff;background:#0d0c0a}
 .contact img{width:100%;height:clamp(460px,60vw,680px);object-fit:cover;opacity:.62}

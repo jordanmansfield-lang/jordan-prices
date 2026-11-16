@@ -172,6 +172,23 @@ export const DEFAULT_CONTENT = {
       { names: "Megan + Ben", image: "", alt: "", paragraphs: ["As soon as I met Jordan I felt as though he was a friend. He is so kind, sweet and helpful, and so incredibly good at getting everyone for the photos and making everyone smile!", "Receiving a sneak peek gallery of our images only 24 hours later was amazing. The wedding day goes by so fast but the photos will last a lifetime and I will be forever grateful we chose Jordan!"] }
     ]
   },
+  suppliers: {
+    eyebrow: "Recommended",
+    heading: "Suppliers I love working with",
+    intro: "A few of the people I love working alongside, and am always happy to recommend. Add your own name, link and a website and/or Instagram for each.",
+    items: [
+      { type: "Hair", name: "", website: "", instagram: "" },
+      { type: "Makeup", name: "", website: "", instagram: "" },
+      { type: "Florist", name: "", website: "", instagram: "" },
+      { type: "Decor & styling", name: "", website: "", instagram: "" },
+      { type: "Venue", name: "", website: "", instagram: "" },
+      { type: "Catering", name: "", website: "", instagram: "" },
+      { type: "Cake", name: "", website: "", instagram: "" },
+      { type: "Stationery", name: "", website: "", instagram: "" },
+      { type: "Entertainment", name: "", website: "", instagram: "" },
+      { type: "Celebrant", name: "", website: "", instagram: "" }
+    ]
+  },
   contact: {
     eyebrow: "Let’s talk",
     heading: "Tell me about your wedding",

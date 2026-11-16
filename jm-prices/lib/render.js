@@ -36,6 +36,7 @@ export function renderPage(c, v) {
   const ex = c.extras || {};
   const fe = ex.filmExtras || [];
   const ad = ex.addOns || [];
+  const suppliers = (c.suppliers?.items || []).filter((s) => s.name);
 
   const packages = pk.map((p, i) => {
     const pos = String(p.panelPosition || "");
@@ -95,6 +96,7 @@ ${S.favicon === true ? `<link rel="icon" type="image/png" href="/img/v${v}/favic
       <li><a class="l" href="#films">Films</a></li>
       <li><a class="l" href="#gallery">Gallery</a></li>
       <li><a class="l" href="#kindwords">Kind words</a></li>
+      ${suppliers.length ? `<li><a class="l" href="#suppliers">Suppliers</a></li>` : ""}
       <li><a class="l" href="#build">Enquire</a></li>
     </ul>
   </div>
@@ -278,6 +280,26 @@ ${packages}
     </div>
   </div>
 </section>
+
+${suppliers.length ? `<section id="suppliers" class="block" style="padding-top:0">
+  <div class="wrap">
+    <div class="chapter" style="padding:0">
+      <div class="eyebrow">${esc(c.suppliers?.eyebrow)}</div>
+      <h2 class="title">${esc(c.suppliers?.heading)}</h2>
+      <p class="small" style="max-width:52ch">${esc(c.suppliers?.intro)}</p>
+    </div>
+    <div class="suppliers">
+      ${suppliers.map((s) => `<div class="supplier">
+        <div class="eyebrow">${esc(s.type)}</div>
+        <div class="name">${esc(s.name)}</div>
+        ${s.website || s.instagram ? `<div class="slinks">
+          ${s.website ? `<a class="tlink" href="${esc(s.website)}" target="_blank" rel="noopener">Website ↗</a>` : ""}
+          ${s.instagram ? `<a class="tlink" href="${esc(s.instagram)}" target="_blank" rel="noopener">Instagram ↗</a>` : ""}
+        </div>` : ""}
+      </div>`).join("")}
+    </div>
+  </div>
+</section>` : ""}
 
 <section id="contact" class="contact">
   ${imgTag(c.contact?.image, "", v, { extra: focusAttr(c, c.contact?.image) })}

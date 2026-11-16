@@ -135,6 +135,7 @@ const SECTIONS = [
   { id: "films", title: "Films", lead: "The film tiles. Each one links out to where the film is hosted." },
   { id: "gallery", title: "Gallery", lead: "The photo grid. Drag order with the arrows." },
   { id: "testimonials", title: "Kind words", lead: "Testimonials from your couples." },
+  { id: "suppliers", title: "Suppliers", lead: "Other suppliers you recommend — hair, makeup, florist, decor and so on. Link to their website, Instagram, or both. Add your own supplier types too; only ones with a name show on the live site." },
   { id: "contact", title: "Contact", lead: "The closing section with your email and links." },
   { id: "emails", title: "Enquiry emails", lead: "What the automatic emails say." },
   { id: "site", title: "Page details", lead: "The browser tab title & icon, search description and footer." }
@@ -151,6 +152,7 @@ const LABELS = {
   drone:"Drone section", builderLine:"Line in the quote summary", text:"Text",
   intro:"Intro text", fromNote:"Note when a “from” price is chosen", thanksHeading:"Thank-you heading (after sending)", thanksText:"Thank-you message",
   items_films:"Film tiles", note:"Second line", url:"Link address", photos:"Photos", names:"Couple’s names",
+  type:"Supplier type (e.g. Hair, Makeup, Florist — or your own)",
   email:"Email address", instagram:"Instagram link", website:"Website link",
   coupleSubject:"Subject of the email to the couple", coupleIntro:"Opening message to the couple", coupleSignoff:"Sign-off",
   jordanSubject:"Subject of the email to you",
@@ -164,7 +166,8 @@ const ITEM_TEMPLATES = {
   addOns: { heading: "New extra", name: "New extra", price: 0, priceIsFrom: true, text: "" },
   "films.items": { title: "New film", note: "Watch the film", url: "https://", image: "" },
   "gallery.photos": { image: "", alt: "" },
-  "testimonials.items": { names: "", image: "", alt: "", paragraphs: [""] }
+  "testimonials.items": { names: "", image: "", alt: "", paragraphs: [""] },
+  "suppliers.items": { type: "New supplier type", name: "", website: "", instagram: "" }
 };
 
 let content = null, photos = [], version = 1, current = "hero", dirty = false;
@@ -208,7 +211,7 @@ function renderSide() {
 function go(id) { current = id; renderSide(); render(); window.scrollTo(0, 0); }
 
 /* ---------- generic editor ---------- */
-function label(key, path) { if (path === "testimonials.items") return "Testimonials"; return LABELS[path === "films.items" ? "items_films" : key] || key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase()); }
+function label(key, path) { if (path === "testimonials.items") return "Testimonials"; if (path === "suppliers.items") return "Suppliers"; return LABELS[path === "films.items" ? "items_films" : key] || key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase()); }
 
 function fieldFor(obj, key, path) {
   const val = obj[key], id = "f-" + path.replace(/[^a-z0-9]/gi, "-");
@@ -263,7 +266,7 @@ function arrayField(obj, key, path) {
   }
   if (tpl) arr.forEach((item) => Object.keys(tpl).forEach((k) => { if (!(k in item)) item[k] = Array.isArray(tpl[k]) ? [] : tpl[k]; }));
   arr.forEach((item, i) => {
-    const t = item.name || item.names || item.title || item.heading || item.big || item.alt || item.image || `Item ${i + 1}`;
+    const t = item.name || item.names || item.title || item.heading || item.big || item.alt || item.image || item.type || `Item ${i + 1}`;
     const sum = h("summary", {}, item.image ? h("img", { src: thumb(item.image), alt: "" }) : null, h("span", { class: "t" }, t), moveBtns(arr, i, rerender));
     const body = h("div", { class: "body" }, ...Object.keys(item).map((k) => fieldFor(item, k, `${path}.${i}.${k}`)));
     wrap.append(h("details", { class: "card", open: arr.length <= 4 && !["photos"].includes(key) }, sum, body));
